@@ -169,7 +169,8 @@ Generate:
 	;get flags
 	GuiControlGet,y,,Optimize%Optimize%,Text
 	RegexMatch(y,"(\(.*\))",m)
-	flags:= SubStr(m1,2,-1) " " ((StripDebugInfo)?"-g0":"")
+	flags32bit:= "-m32 " SubStr(m1,2,-1) " " ((StripDebugInfo)?"-g0":"")
+	flags64bit:= "-m64 " SubStr(m1,2,-1) " " ((StripDebugInfo)?"-g0":"")
 
 	LogLn_Clear()
 	LogLn("<Generating MCode...>")
@@ -185,17 +186,20 @@ Generate:
 			Gui -Disabled
 			return
 		}
-		x:=MCode_Generate(y,ExeFile,flags)
+		x32:=MCode_Generate(y,ExeFile,flags32bit)
+		x64:=MCode_Generate(y,ExeFile,flags64bit)
 		FileDelete,%y%
 	} else {
-		x:=MCode_Generate(SourceFile,ExeFile,flags)
+		x32:=MCode_Generate(SourceFile,ExeFile,flags32bit)
+		x64:=MCode_Generate(SourceFile,ExeFile,flags64bit)
 	}
 	RunTime:=QPC(0)
-	if StrLen(x) {
+	if (StrLen(x32) && StrLen(x64)) {
 		if InStr(MCodeStyle,"Bentschi") {
 			LogLn("<Converting Hexadecimal to Base64...>")
-			compiledCode := removeWhitespaceChars(Hex2Base64(x))
-			x := "2,x" (Get_CompilationMode(ExeFile)=="32"?"86":"64") ":" compiledCode
+			compiledCode32 := removeWhitespaceChars(Hex2Base64(x32))
+			compiledCode64 := removeWhitespaceChars(Hex2Base64(x64))
+			x := "2,x86:" compiledCode32 ",x64:" compiledCode64
 		}
 		y:="Done. Run time: " RunTime " seconds"
 		LogLn("<" y ">")
@@ -339,11 +343,6 @@ Get_CompilerType(cp) {
 		return "64"
 	else
 		return "32"
-}
-; Defaults to x64, unless 32-bit is explicitly stated.
-; Make sure to have a multilib compiler.
-Get_CompilationMode(cp) {
-	return InStr(cp, "-m32") ? "32" : "64"
 }
 get_where_Path(item) {
 	data:=Get_stdout("where " item)
