@@ -195,7 +195,7 @@ Generate:
 		if InStr(MCodeStyle,"Bentschi") {
 			LogLn("<Converting Hexadecimal to Base64...>")
 			compiledCode := removeWhitespaceChars(Hex2Base64(x))
-			x := "2,x" (Get_CompilerType(ExeFile)=="32"?"86":"64") ":" compiledCode
+			x := "2,x" (Get_CompilationMode(ExeFile)=="32"?"86":"64") ":" compiledCode
 		}
 		y:="Done. Run time: " RunTime " seconds"
 		LogLn("<" y ">")
@@ -339,6 +339,11 @@ Get_CompilerType(cp) {
 		return "64"
 	else
 		return "32"
+}
+; Defaults to x64, unless 32-bit is explicitly stated.
+; Make sure to have a multilib compiler.
+Get_CompilationMode(cp) {
+	return InStr(cp, "-m32") ? "32" : "64"
 }
 get_where_Path(item) {
 	data:=Get_stdout("where " item)
